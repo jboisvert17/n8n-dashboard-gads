@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { workflows } from '@/lib/config';
 
-// URLs en dur pour éviter les problèmes de cache
-const N8N_BASE_URL = 'https://automation.accolades.marketing';
+// URL n8n depuis les variables d'environnement
+const N8N_BASE_URL = process.env.NEXT_PUBLIC_N8N_URL || 'https://automation.accolades.marketing';
 
 export async function POST(request: NextRequest) {
   try {

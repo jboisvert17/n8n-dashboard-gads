@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Configuration NocoDB
-const NOCODB_BASE_URL = 'https://database.accolades.marketing';
+// Configuration NocoDB depuis les variables d'environnement
+const NOCODB_BASE_URL = process.env.NEXT_PUBLIC_NOCODB_URL || 'https://database.accolades.marketing';
 
 // IDs des tables NocoDB
 const NOCODB_TABLES: Record<string, string> = {

@@ -42,12 +42,22 @@ export function useNocoDB<T = Record<string, unknown>>({
       if (where) params.set('where', where);
 
       const response = await fetch(`/api/nocodb?${params}`);
-      const result = await response.json();
 
+      // Vérifier le statut AVANT de parser le JSON
       if (!response.ok) {
-        throw new Error(result.error || 'Erreur lors de la récupération');
+        const errorText = await response.text();
+        let errorMessage = `Erreur ${response.status}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          // Si le texte n'est pas du JSON, utiliser le texte brut
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
+      const result = await response.json();
       setData(result.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -86,10 +96,14 @@ export interface SearchTermAnalysis {
   action_status?: ActionStatus;
   exclusion_level?: ExclusionLevel;
   processed_at?: string;
-  // Contexte Google Ads (optionnel, pour le workflow n8n)
+  // Contexte Google Ads (pour le workflow n8n)
   ad_group_id?: string;
+  ad_group_name?: string;
   campaign_id?: string;
+  campaign_name?: string;
   customer_id?: string;
+  customer_name?: string;
+  match_type?: string;
   CreatedAt?: string;
 }
 

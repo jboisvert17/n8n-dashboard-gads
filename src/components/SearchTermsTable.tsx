@@ -54,6 +54,17 @@ export function SearchTermsTable() {
   const [currentStep, setCurrentStep] = useState<Step>('selection');
   const [exclusionLevel, setExclusionLevel] = useState<ExclusionLevel>('campaign');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // État du popup de confirmation
+  const [showResultPopup, setShowResultPopup] = useState(false);
+  const [resultData, setResultData] = useState<{
+    success: boolean;
+    count: number;
+    level: string;
+    savings: number;
+    terms: string[];
+    error?: string;
+  } | null>(null);
 
   // Données enrichies avec les actions
   const enrichedData = useMemo(() => {
@@ -181,25 +192,44 @@ export function SearchTermsTable() {
     });
   };
 
+  // Labels pour les niveaux d'exclusion
+  const levelLabels: Record<ExclusionLevel, string> = {
+    'ad_group': 'Ad Group',
+    'campaign': 'Campaign',
+    'list': 'Liste partagée'
+  };
+
   // Soumettre les exclusions à n8n
   const submitExclusions = async () => {
     if (termsToExclude.length === 0) return;
     
     setIsSubmitting(true);
+    const termsData = termsToExclude.map(t => ({
+      id: t.Id,
+      search_term: t.search_term,
+      cost: t.cost || 0,
+      clicks: t.clicks || 0,
+      impressions: t.impressions || 0,
+      reason: t.reason || '',
+      // Données Google Ads pour l'exclusion
+      customer_id: t.customer_id || '',
+      customer_name: t.customer_name || '',
+      campaign_id: t.campaign_id || '',
+      campaign_name: t.campaign_name || '',
+      ad_group_id: t.ad_group_id || '',
+      ad_group_name: t.ad_group_name || '',
+      match_type: t.match_type || 'EXACT'
+    }));
+    
+    const totalSavings = termsData.reduce((sum, t) => sum + t.cost, 0);
+    
     try {
       const payload = {
         workflowId: 'apply-negative-keywords',
         payload: {
           action: 'apply_exclusions',
           exclusion_level: exclusionLevel,
-          terms_to_exclude: termsToExclude.map(t => ({
-            id: t.Id,
-            search_term: t.search_term,
-            cost: t.cost,
-            clicks: t.clicks,
-            impressions: t.impressions,
-            reason: t.reason
-          })),
+          terms_to_exclude: termsData,
           total_count: termsToExclude.length
         }
       };
@@ -211,19 +241,45 @@ export function SearchTermsTable() {
       });
 
       if (response.ok) {
-        alert(`✅ ${termsToExclude.length} mots-clés envoyés à n8n pour exclusion au niveau "${exclusionLevel}"`);
+        // Afficher le popup de succès
+        setResultData({
+          success: true,
+          count: termsToExclude.length,
+          level: levelLabels[exclusionLevel],
+          savings: totalSavings,
+          terms: termsData.map(t => t.search_term)
+        });
+        setShowResultPopup(true);
+        
         // Reset
         setTermActions(new Map());
         setSelectedTerms(new Set());
         setCurrentStep('selection');
+        
         // Rafraîchir les données
         await refetch();
       } else {
         const errorData = await response.json();
-        alert('❌ Erreur : ' + (errorData.error || 'Erreur inconnue'));
+        setResultData({
+          success: false,
+          count: 0,
+          level: '',
+          savings: 0,
+          terms: [],
+          error: errorData.error || 'Erreur inconnue'
+        });
+        setShowResultPopup(true);
       }
     } catch (err) {
-      alert('❌ Erreur : ' + String(err));
+      setResultData({
+        success: false,
+        count: 0,
+        level: '',
+        savings: 0,
+        terms: [],
+        error: String(err)
+      });
+      setShowResultPopup(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -426,9 +482,104 @@ export function SearchTermsTable() {
     );
   }
 
+  // Composant Popup de résultat
+  const ResultPopup = () => {
+    if (!showResultPopup || !resultData) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-dark-800 border border-dark-600 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+          {/* Header */}
+          <div className={clsx(
+            "p-6 text-center",
+            resultData.success ? "bg-emerald-500/20" : "bg-rose-500/20"
+          )}>
+            <div className={clsx(
+              "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4",
+              resultData.success ? "bg-emerald-500" : "bg-rose-500"
+            )}>
+              {resultData.success ? (
+                <Check className="w-8 h-8 text-white" />
+              ) : (
+                <X className="w-8 h-8 text-white" />
+              )}
+            </div>
+            <h2 className="text-2xl font-bold text-white">
+              {resultData.success ? 'Exclusions envoyées !' : 'Erreur'}
+            </h2>
+          </div>
+          
+          {/* Contenu */}
+          <div className="p-6">
+            {resultData.success ? (
+              <>
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="text-center p-3 bg-dark-700 rounded-lg">
+                    <p className="text-3xl font-bold text-white">{resultData.count}</p>
+                    <p className="text-sm text-gray-400">mots-clés</p>
+                  </div>
+                  <div className="text-center p-3 bg-dark-700 rounded-lg">
+                    <p className="text-lg font-bold text-blue-400">{resultData.level}</p>
+                    <p className="text-sm text-gray-400">niveau</p>
+                  </div>
+                  <div className="text-center p-3 bg-dark-700 rounded-lg">
+                    <p className="text-xl font-bold text-emerald-400">${resultData.savings.toFixed(2)}</p>
+                    <p className="text-sm text-gray-400">économies</p>
+                  </div>
+                </div>
+                
+                {/* Liste des termes */}
+                <div className="bg-dark-700 rounded-lg p-4 max-h-48 overflow-y-auto mb-6">
+                  <p className="text-sm text-gray-400 mb-2">Mots-clés exclus :</p>
+                  <div className="flex flex-wrap gap-2">
+                    {resultData.terms.slice(0, 15).map((term, i) => (
+                      <span key={i} className="px-2 py-1 bg-rose-500/20 text-rose-300 rounded text-sm">
+                        {term}
+                      </span>
+                    ))}
+                    {resultData.terms.length > 15 && (
+                      <span className="px-2 py-1 text-gray-500 text-sm">
+                        +{resultData.terms.length - 15} autres
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                <p className="text-sm text-gray-400 text-center mb-4">
+                  Le workflow n8n traite actuellement vos exclusions.<br/>
+                  Les statuts seront mis à jour dans NocoDB.
+                </p>
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-rose-400 mb-2">Une erreur s'est produite :</p>
+                <p className="text-gray-300 bg-dark-700 rounded-lg p-3 text-sm">
+                  {resultData.error}
+                </p>
+              </div>
+            )}
+          </div>
+          
+          {/* Footer */}
+          <div className="p-4 border-t border-dark-600">
+            <button
+              onClick={() => setShowResultPopup(false)}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ÉTAPE 1 : Sélection des mots-clés
   return (
     <div className="space-y-4">
+      {/* Popup de résultat */}
+      <ResultPopup />
       {/* Statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="card text-center">
