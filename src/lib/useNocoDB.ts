@@ -14,6 +14,7 @@ interface UseNocoDBOptions {
   sort?: string;
   where?: string;
   autoFetch?: boolean;
+  tableId?: string; // ID de table personnalisé (pour les tables spécifiques aux clients)
 }
 
 interface UseNocoDBResult<T> {
@@ -29,6 +30,7 @@ export function useNocoDB<T = Record<string, unknown>>({
   sort = '',
   where = '',
   autoFetch = true,
+  tableId,
 }: UseNocoDBOptions): UseNocoDBResult<T> {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +46,7 @@ export function useNocoDB<T = Record<string, unknown>>({
       params.set('limit', limit.toString());
       if (sort) params.set('sort', sort);
       if (where) params.set('where', where);
+      if (tableId) params.set('tableId', tableId); // Ajouter le tableId personnalisé
 
       const response = await fetch(`/api/nocodb?${params}`);
 
@@ -69,7 +72,7 @@ export function useNocoDB<T = Record<string, unknown>>({
     } finally {
       setLoading(false);
     }
-  }, [table, limit, sort, where]);
+  }, [table, limit, sort, where, tableId]);
 
   useEffect(() => {
     if (autoFetch) {

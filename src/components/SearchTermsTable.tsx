@@ -1,11 +1,12 @@
 'use client';
 
 import { 
-  useSearchTermsAnalysis, 
+  useNocoDB,
   SearchTermAnalysis, 
   ActionStatus,
   ExclusionLevel
 } from '@/lib/useNocoDB';
+import { useClient } from '@/lib/ClientContext';
 import { 
   RefreshCw, 
   Search, 
@@ -38,7 +39,15 @@ interface TermWithAction extends SearchTermAnalysis {
 }
 
 export function SearchTermsTable() {
-  const { data, loading, error, refetch } = useSearchTermsAnalysis(500);
+  const { selectedClient } = useClient();
+  
+  // Utiliser le tableId du client sélectionné ou la table par défaut
+  const { data, loading, error, refetch } = useNocoDB<SearchTermAnalysis>({
+    table: 'searchTermsAnalysis',
+    limit: 500,
+    sort: '-CreatedAt',
+    tableId: selectedClient?.nocodb_table_id, // Utiliser la table du client sélectionné
+  });
   
   // États de l'interface
   const [searchQuery, setSearchQuery] = useState('');

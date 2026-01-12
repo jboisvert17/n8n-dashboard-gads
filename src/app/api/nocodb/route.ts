@@ -22,15 +22,22 @@ export async function GET(request: NextRequest) {
   const offset = searchParams.get('offset') || '0';
   const sort = searchParams.get('sort') || '';
   const where = searchParams.get('where') || '';
+  const customTableId = searchParams.get('tableId'); // ID de table personnalisé
 
-  if (!table || !NOCODB_TABLES[table]) {
-    return NextResponse.json(
-      { error: 'Table invalide', validTables: Object.keys(NOCODB_TABLES) },
-      { status: 400 }
-    );
+  // Si un tableId personnalisé est fourni, l'utiliser directement
+  if (customTableId) {
+    const tableId = customTableId;
+  } else {
+    // Sinon, utiliser la table par défaut
+    if (!table || !NOCODB_TABLES[table]) {
+      return NextResponse.json(
+        { error: 'Table invalide', validTables: Object.keys(NOCODB_TABLES) },
+        { status: 400 }
+      );
+    }
   }
 
-  const tableId = NOCODB_TABLES[table];
+  const tableId = customTableId || NOCODB_TABLES[table!];
 
   try {
     // Construit l'URL avec les paramètres
