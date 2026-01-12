@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { ClientConfiguration } from '@/types';
 
-type TableName = 'campaigns' | 'searchTermsAnalysis' | 'workflowLogs' | 'dailyMetrics';
+// Réexportation pour faciliter les imports
+export type { ClientConfiguration };
+
+type TableName = 'campaigns' | 'searchTermsAnalysis' | 'workflowLogs' | 'dailyMetrics' | 'configuration';
 
 interface UseNocoDBOptions {
   table: TableName;
@@ -223,6 +227,16 @@ export function useWorkflowLogs(limit = 20) {
     table: 'workflowLogs',
     limit,
     sort: '-triggered_at',
+  });
+}
+
+// Hook pour la configuration des clients (Acolya)
+// Le type ClientConfiguration est importé depuis @/types
+export function useClientConfiguration(limit = 100) {
+  return useNocoDB<ClientConfiguration>({
+    table: 'configuration',
+    limit,
+    sort: 'customer_name', // Tri alphabétique par nom de client
   });
 }
 

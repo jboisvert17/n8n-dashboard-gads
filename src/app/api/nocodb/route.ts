@@ -9,6 +9,7 @@ const NOCODB_TABLES: Record<string, string> = {
   searchTermsAnalysis: 'mjfs0gle9j3wyfi',
   workflowLogs: 'mrpo5lia5l7a7al',
   dailyMetrics: 'mr4qlww7ecgz0ap',
+  configuration: 'msy0l7ayypvzotp', // Table Configuration (Acolya)
 };
 
 // Token API NocoDB (à configurer via variable d'environnement)

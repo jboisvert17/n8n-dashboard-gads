@@ -95,4 +95,16 @@ export interface WorkflowConfig {
   nocodbApiToken: string;
 }
 
+// Configuration des clients (depuis NocoDB - table Acolya/Configuration)
+export interface ClientConfiguration {
+  Id: number;
+  customer_name: string;
+  customer_id: string;
+  mcc_id: string;
+  shared_list_name: string;
+  nocodb_base_id: string;
+  nocodb_table_id: string;
+  email_to: string;
+}
+
 

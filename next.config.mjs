@@ -5,8 +5,8 @@ const nextConfig = {
   
   // Variables d'environnement exposées au client
   env: {
-    NEXT_PUBLIC_N8N_URL: process.env.NEXT_PUBLIC_N8N_URL || 'https://votre-n8n.exemple.com',
-    NEXT_PUBLIC_NOCODB_URL: process.env.NEXT_PUBLIC_NOCODB_URL || 'https://votre-nocodb.exemple.com',
+    NEXT_PUBLIC_N8N_URL: process.env.NEXT_PUBLIC_N8N_URL || 'https://automation.accolades.marketing',
+    NEXT_PUBLIC_NOCODB_URL: process.env.NEXT_PUBLIC_NOCODB_URL || 'https://database.accolades.marketing',
   },
 }
 

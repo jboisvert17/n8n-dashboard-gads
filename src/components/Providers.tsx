@@ -2,6 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { SidebarProvider } from '@/lib/SidebarContext';
+import { ClientProvider } from '@/lib/ClientContext';
 import { ReactNode } from 'react';
 
 interface ProvidersProps {
@@ -12,7 +13,9 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
       <SidebarProvider>
-        {children}
+        <ClientProvider>
+          {children}
+        </ClientProvider>
       </SidebarProvider>
     </SessionProvider>
   );

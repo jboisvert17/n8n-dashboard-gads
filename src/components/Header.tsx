@@ -2,14 +2,18 @@
 
 import { Bell, RefreshCw, User } from 'lucide-react';
 import { useState } from 'react';
+import { ClientSelector } from './ClientSelector';
+import { useClient } from '@/lib/ClientContext';
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
+  showClientSelector?: boolean;
 }
 
-export function Header({ title, subtitle }: HeaderProps) {
+export function Header({ title, subtitle, showClientSelector = true }: HeaderProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { setSelectedClient } = useClient();
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -21,10 +25,22 @@ export function Header({ title, subtitle }: HeaderProps) {
 
   return (
     <header className="h-16 bg-dark-800/50 backdrop-blur-sm border-b border-dark-600 flex items-center justify-between px-6 sticky top-0 z-40">
-      {/* Titre */}
-      <div>
-        <h1 className="text-xl font-semibold text-white">{title}</h1>
-        {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+      {/* Titre et sélecteur de client */}
+      <div className="flex items-center gap-6">
+        <div>
+          <h1 className="text-xl font-semibold text-white">{title}</h1>
+          {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+        </div>
+        
+        {/* Sélecteur de client */}
+        {showClientSelector && (
+          <ClientSelector 
+            onClientSelect={(client) => {
+              setSelectedClient(client);
+              console.log('Client sélectionné:', client);
+            }}
+          />
+        )}
       </div>
 
       {/* Actions */}
